@@ -1,5 +1,12 @@
 import express from "express";
 import { SuperfaceClient } from "@superfaceai/one-sdk";
+
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.set("trust proxy", true);
 
@@ -33,10 +40,23 @@ async function run(ip) {
   }
 }
 
-app.get("/", async (req, res) => {
-  res.send(await run(req.ip));
+app.use(express.static(path.join(__dirname, "client")));
+
+app.get("/", async (req, res) => {   
+    let geographicLocation = res.send(await run(req.ip));
+
+    /* Here, we can target several countries or even districts or places within a country. Then we sent the customized content */    
+    if (geographicLocation['addressCountry'] == 'Uganda'){
+        res.sendFile(path.join(__dirname, 'client/ug.html'));
+    }
+    else if(geographicLocation['addressCountry'] == 'France'){
+        res.sendFile(path.join(__dirname, 'client/fr.html'));    
+    }else{
+        /* If location cannot be specified */
+        res.sendFile(path.join(__dirname, 'client/default.html'));
+    }
 });
 
 app.listen(3000, () => {
-  console.log("SERVER RUNNIHG AT PORT 3000");
+  console.log("SERVER RUNNING AT PORT 3000");
 });
